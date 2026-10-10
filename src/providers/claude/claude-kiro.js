@@ -1339,11 +1339,12 @@ async saveCredentialsToFile(filePath, newData) {
                                </tool_use_guidelines>`;
         
         let systemPrompt = this.getContentText(inSystemPrompt);
-        // 在 systemPrompt 前面添加内置前缀
-        if (systemPrompt) {
+        const hasInputSystemPrompt = systemPrompt.trim().length > 0;
+        // Only inject prompt prefixes when the caller supplied nonblank system text.
+        if (hasInputSystemPrompt) {
             systemPrompt = `${builtInPrefix}\n\n${systemPrompt}`;
         } else {
-            systemPrompt = `${builtInPrefix}`;
+            systemPrompt = '';
         }
         
         const processedMessages = messages.map(message => ({
@@ -1356,12 +1357,8 @@ async saveCredentialsToFile(filePath, newData) {
         }
 
         const thinkingPrefix = this._generateThinkingPrefix(thinking);
-        if (thinkingPrefix) {
-            if (!systemPrompt) {
-                systemPrompt = thinkingPrefix;
-            } else if (!this._hasThinkingPrefix(systemPrompt)) {
-                systemPrompt = `${thinkingPrefix}\n${systemPrompt}`;
-            }
+        if (hasInputSystemPrompt && thinkingPrefix && !this._hasThinkingPrefix(systemPrompt)) {
+            systemPrompt = `${thinkingPrefix}\n${systemPrompt}`;
         }
 
         // 判断最后一条消息是否为 assistant,如果是则移除
